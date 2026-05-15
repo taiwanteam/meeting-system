@@ -204,6 +204,8 @@ onAuthStateChanged(auth, (user) => {
 
             snapshot.forEach((d) => {
                 const m = d.data();
+                // 檢查目前登入的人，是不是這筆會議的建立者
+                const isOwner = currentUser && m.userEmail === currentUser.email;
                 list.innerHTML += `
                     <li>
                         <strong>${m.title}</strong> ｜ <span style="color:#4285f4">${m.room}</span><br>
@@ -212,7 +214,8 @@ onAuthStateChanged(auth, (user) => {
                             🏢 科室：${m.dept || "未填"} ｜ 👤 預約者：${m.userName || "未填"}<br>
                             // 📧 帳號：${m.userEmail}
                         </div>
-                        <button class="del-btn" onclick="del('${d.id}')">刪除</button>
+                        ${isOwner ? `<button class="del-btn" onclick="del('${d.id}')">刪除</button>` : ''}
+                        // <button class="del-btn" onclick="del('${d.id}')">刪除</button>
                     </li>
                 `;
             });
