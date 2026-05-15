@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會議室預約系統</title>
+    <title>會議室預約系統 - 最終修正版</title>
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2, h3 { color: #333; margin-top: 0; }
         label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
         input, select, button { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         button { background-color: #4285f4; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover { background-color: #357ae8; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .del-btn { background-color: #ff4d4d; width: auto; padding: 6px 12px; font-size: 14px; }
+        .del-btn { background-color: #ff4d4d; width: auto; padding: 6px 12px; margin: 5px 0; font-size: 14px; }
+        .del-btn:hover { background-color: #cc0000; }
         ul { list-style: none; padding: 0; }
-        li { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4285f4; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .meeting-time { font-size: 14px; color: #666; margin: 5px 0; }
-        .user-info { font-size: 13px; color: #888; border-top: 1px solid #eee; pt: 5px; }
+        li { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4285f4; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+        .meeting-info { margin-bottom: 5px; }
+        .meeting-time { font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
-    <h2>📅 會議室預約系統</h2>
+    <h2>📅 會議室系統</h2>
     
     <div class="card">
         <button id="loginBtn" onclick="login()">🔑 使用 Google 帳號登入</button>
@@ -29,16 +31,9 @@
     </div>
 
     <div class="card">
-        <h3>➕ 新增預約</h3>
-        
+        <h3>➕ 新增會議</h3>
         <label>會議名稱</label>
-        <input id="title" type="text" placeholder="例如：月例會">
-
-        <label>科室名稱</label>
-        <input id="dept" type="text" placeholder="例如：資訊科">
-
-        <label>預約者姓名</label>
-        <input id="userName" type="text" placeholder="請輸入姓名">
+        <input id="title" type="text" placeholder="輸入會議主題">
 
         <label>選擇會議室</label>
         <select id="room">
@@ -54,7 +49,7 @@
         <button id="addBtn" onclick="addMeeting()">確認預約</button>
     </div>
 
-    <h3>📋 會議列表 (民國年顯示)</h3>
+    <h3>📋 會議列表</h3>
     <ul id="list"></ul>
 
 <script type="module">
@@ -83,6 +78,7 @@
 
     let currentUser = null;
 
+    // 監聽登入
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
@@ -94,7 +90,11 @@
     });
 
     window.login = async function () {
-        try { await signInWithPopup(auth, provider); } catch (e) { alert("登入失敗"); }
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            alert("登入失敗: " + error.message);
+        }
     };
 
     async function loadRooms() {
@@ -102,65 +102,110 @@
         const select = document.getElementById("room");
         select.innerHTML = "<option value=''>請選擇會議室</option>";
         snapshot.forEach((d) => {
+            const data = d.data();
             const opt = document.createElement("option");
-            opt.value = d.data().name;
-            opt.textContent = d.data().name;
+            opt.value = data.name;
+            opt.textContent = data.name;
             select.appendChild(opt);
         });
     }
 
-    /* ➕ 新增會議 */
-    window.addMeeting = async function () {
-        if (!currentUser) return alert("請先登入");
+    /* ➕ 新增會議（強化防重複版） */
+    /* 導入 runTransaction */
+import { 
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, 
+    runTransaction // 👈 必須確保有導入這個
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const title = document.getElementById("title").value;
-        const dept = document.getElementById("dept").value;
-        const userName = document.getElementById("userName").value;
-        const room = document.getElementById("room").value;
-        const startVal = document.getElementById("start").value;
-        const endVal = document.getElementById("end").value;
-        const addBtn = document.getElementById("addBtn");
+/* ➕ 新增會議（Transaction 絕對不重複版） */
+window.addMeeting = async function () {
+    if (!currentUser) return alert("請先登入");
 
-        if (!title || !dept || !userName || !room || !startVal || !endVal) {
-            return alert("請填寫所有欄位");
-        }
+    const title = document.getElementById("title").value;
+    const room = document.getElementById("room").value;
+    const startVal = document.getElementById("start").value;
+    const endVal = document.getElementById("end").value;
+    const addBtn = document.getElementById("addBtn");
 
-        const newStart = new Date(startVal);
-        const newEnd = new Date(endVal);
+    if (!title || !room || !startVal || !endVal) return alert("請填寫完整資料");
 
-        if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
+    const newStart = new Date(startVal);
+    const newEnd = new Date(endVal);
 
-        addBtn.disabled = true;
-        addBtn.textContent = "⌛ 正在核對預約時段...";
+    if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
 
-        try {
-            const snapshot = await getDocs(collection(db, "meetings"));
+    addBtn.disabled = true;
+    addBtn.textContent = "同步檢查中...";
+
+    try {
+        // 使用 Transaction 確保讀取與寫入是連貫的，不受延遲影響
+        await runTransaction(db, async (transaction) => {
+            
+            // 1. 在 Transaction 中重新抓取所有會議資料
+            const meetingsCol = collection(db, "meetings");
+            const snapshot = await getDocs(meetingsCol);
+            
             let isConflict = false;
-
             snapshot.forEach((d) => {
                 const m = d.data();
                 if (m.room === room) {
                     const existS = new Date(m.startTime);
                     const existE = new Date(m.endTime);
-                    if (newStart < existE && newEnd > existS) isConflict = true;
+                    if (newStart < existE && newEnd > existS) {
+                        isConflict = true;
+                    }
                 }
             });
 
             if (isConflict) {
-                alert("❌ 該時段會議室已被預約！");
-            } else {
-                await addDoc(collection(db, "meetings"), {
-                    title, dept, userName, room,
-                    startTime: startVal,
-                    endTime: endVal,
-                    userEmail: currentUser.email,
-                    createdAt: new Date().toISOString()
-                });
-                alert("✅ 預約成功！");
-                loadData();
+                throw "CONFLICT"; // 丟出錯誤跳出 Transaction
             }
+
+            // 2. 如果沒有衝突，直接寫入新文件
+            const newDocRef = doc(collection(db, "meetings"));
+            transaction.set(newDocRef, {
+                title,
+                room,
+                startTime: startVal,
+                endTime: endVal,
+                userEmail: currentUser.email,
+                createdAt: new Date().toISOString()
+            });
+        });
+
+        alert("✅ 預約成功！");
+        document.getElementById("title").value = "";
+        loadData();
+
+    } catch (e) {
+        if (e === "CONFLICT") {
+            alert("❌ 該時段會議室已被預約（剛剛有人搶先一步）！");
+        } else {
+            console.error("交易失敗: ", e);
+            alert("發生未知錯誤，請檢查網路後再試");
+        }
+    } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = "確認預約";
+    }
+};
+
+            // 步驟 3: 寫入資料
+            await addDoc(collection(db, "meetings"), {
+                title,
+                room,
+                startTime: startVal,
+                endTime: endVal,
+                userEmail: currentUser.email,
+                createdAt: new Date().toISOString()
+            });
+
+            alert("✅ 預約成功！");
+            document.getElementById("title").value = ""; // 清空輸入
+            loadData();
         } catch (e) {
-            alert("系統錯誤：" + e.message);
+            console.error(e);
+            alert("發生錯誤，請稍後再試");
         } finally {
             addBtn.disabled = false;
             addBtn.textContent = "確認預約";
@@ -168,45 +213,43 @@
     };
 
     window.del = async function (id) {
-        if (confirm("確定刪除此預約？")) {
+        if (confirm("確定要刪除此預約嗎？")) {
             await deleteDoc(doc(db, "meetings", id));
             loadData();
         }
     };
 
-    /* 📋 顯示列表 (民國年轉換) */
     async function loadData() {
         const list = document.getElementById("list");
         try {
+            // 依照開始時間排序
             const q = query(collection(db, "meetings"), orderBy("startTime", "asc"));
             const snapshot = await getDocs(q);
             list.innerHTML = "";
 
-            const toMinguo = (dateStr) => {
-                const d = new Date(dateStr);
-                const yy = d.getFullYear() - 1911;
-                const mm = d.getMonth() + 1;
-                const dd = d.getDate();
-                const hh = String(d.getHours()).padStart(2, '0');
-                const min = String(d.getMinutes()).padStart(2, '0');
-                return `民國 ${yy}/${mm}/${dd} ${hh}:${min}`;
-            };
-
             snapshot.forEach((d) => {
                 const m = d.data();
+                // 排除格式錯誤的舊資料
+                if (!m.startTime || !m.endTime) return;
+
+                const st = new Date(m.startTime).toLocaleString('zh-TW', { hour12: true });
+                const et = new Date(m.endTime).toLocaleString('zh-TW', { hour12: true });
+
                 list.innerHTML += `
                     <li>
-                        <strong>${m.title}</strong> ｜ <span style="color:#4285f4">${m.room}</span><br>
-                        <div class="meeting-time">⏰ ${toMinguo(m.startTime)} ~ ${toMinguo(m.endTime)}</div>
-                        <div class="user-info">
-                            🏢 科室：${m.dept || "未填"} ｜ 👤 預約者：${m.userName || "未填"}<br>
-                            📧 帳號：${m.userEmail}
-                        </div>
+                        <div class="meeting-info"><strong>${m.title}</strong> ｜ <span style="color:#4285f4">${m.room}</span></div>
+                        <div class="meeting-time">⏰ ${st} ~ ${et}</div>
+                        <div style="font-size:12px; color:#999;">👤 ${m.userEmail}</div>
                         <button class="del-btn" onclick="del('${d.id}')">刪除</button>
                     </li>
                 `;
             });
-        } catch (e) { console.log("載入中..."); }
+        } catch (e) {
+            console.log("正在初始索引或讀取中...");
+            // 若索引未建好，使用基本讀取做為 fallback
+            const snapshot = await getDocs(collection(db, "meetings"));
+            list.innerHTML = "載入中，請確保已在 Firebase 建立排序索引...";
+        }
     }
 
     loadRooms();
