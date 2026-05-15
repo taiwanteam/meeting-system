@@ -223,10 +223,14 @@ window.autoCleanup = async function() {
                 const newDocRef = doc(collection(db, "meetings"));
                 transaction.set(newDocRef, {
                     title, dept, userName, room,
-                    startTime: startVal,
-                    endTime: endVal,
+                    startTime: new Date(startVal).toISOString(), 
+                    endTime: new Date(endVal).toISOString(), 
                     userEmail: currentUser.email,
                     createdAt: new Date().toISOString()
+                    // startTime: startVal,
+                    // endTime: endVal,
+                    // userEmail: currentUser.email,
+                    // createdAt: new Date().toISOString()
                 });
             });
 
