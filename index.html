@@ -83,17 +83,22 @@
 
     let currentUser = null;
 
-    // 監聽登入狀態
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById("userInfo").innerText = "✅ 已登入：" + user.email;
-            document.getElementById("userInfo").style.display = "block";
-            document.getElementById("loginBtn").style.display = "none";
-            loadData();
-            loadRooms();
-        }
-    });
+// 監聽登入狀態
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        document.getElementById("userInfo").innerText = "✅ 已登入：" + user.email;
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("loginBtn").style.display = "none";
+        
+        // 登入成功後才去抓資料，這樣才不會因為權限問題報錯
+        loadData();
+        loadRooms();
+    } else {
+        // 如果沒登入，清空列表
+        document.getElementById("list").innerHTML = "請先登入以查看預約清單";
+    }
+});
 
     // 暴露函式給全域 (解決 login is not defined)
     window.login = async function () {
