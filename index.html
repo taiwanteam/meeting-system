@@ -212,10 +212,9 @@ onAuthStateChanged(auth, (user) => {
                         <div class="meeting-time">⏰ ${toMinguo(m.startTime)} ~ ${toMinguo(m.endTime)}</div>
                         <div class="user-info">
                             🏢 科室：${m.dept || "未填"} ｜ 👤 預約者：${m.userName || "未填"}<br>
-                            // 📧 帳號：${m.userEmail}
+
                         </div>
                         ${isOwner ? `<button class="del-btn" onclick="del('${d.id}')">刪除</button>` : ''}
-                        // <button class="del-btn" onclick="del('${d.id}')">刪除</button>
                     </li>
                 `;
             });
