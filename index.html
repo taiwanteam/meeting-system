@@ -87,7 +87,8 @@
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        document.getElementById("userInfo").innerText = "✅ 已登入：" + user.email;
+        // document.getElementById("userInfo").innerText = "✅已登入：" + user.email;
+        document.getElementById("userInfo").innerText = "✅用google 帳號 已登入：";
         document.getElementById("userInfo").style.display = "block";
         document.getElementById("loginBtn").style.display = "none";
         
@@ -209,7 +210,7 @@ onAuthStateChanged(auth, (user) => {
                         <div class="meeting-time">⏰ ${toMinguo(m.startTime)} ~ ${toMinguo(m.endTime)}</div>
                         <div class="user-info">
                             🏢 科室：${m.dept || "未填"} ｜ 👤 預約者：${m.userName || "未填"}<br>
-                            📧 帳號：${m.userEmail}
+                            // 📧 帳號：${m.userEmail}
                         </div>
                         <button class="del-btn" onclick="del('${d.id}')">刪除</button>
                     </li>
