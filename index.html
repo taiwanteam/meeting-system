@@ -63,7 +63,7 @@
         getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, runTransaction 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { 
-        getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged 
+        getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,setPersistence, browserSessionPersistence
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -102,9 +102,27 @@ onAuthStateChanged(auth, (user) => {
 });
 
     // 暴露函式給全域 (解決 login is not defined)
+    // window.login = async function () {
+    //     try { await signInWithPopup(auth, provider); } catch (e) { alert("登入失敗"); }
+    // };
     window.login = async function () {
-        try { await signInWithPopup(auth, provider); } catch (e) { alert("登入失敗"); }
-    };
+    try {
+        // 1. 設定持久性：只在目前瀏覽器分頁/視窗開啟時有效
+        await setPersistence(auth, browserSessionPersistence);
+        
+        // 2. 啟動 Google 登入視窗
+        await signInWithPopup(auth, provider);
+        
+        console.log("登入成功，設定為 Session 持久化 (關閉分頁即登出)");
+    } catch (e) {
+        console.error("登入錯誤細節：", e);
+        if (e.code === "auth/popup-blocked") {
+            alert("❌ 登入視窗被瀏覽器攔截，請允許彈出視窗。");
+        } else {
+            alert("登入失敗：" + e.message);
+        }
+    }
+};
 
     async function loadRooms() {
         const snapshot = await getDocs(collection(db, "rooms"));
