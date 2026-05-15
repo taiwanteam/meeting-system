@@ -166,7 +166,6 @@ window.del = async function(id) {
 async function loadData() {
 
   const snapshot = await getDocs(collection(db, "meetings"));
-
   const list = document.getElementById("list");
 
   list.innerHTML = "";
@@ -175,19 +174,26 @@ async function loadData() {
 
     const m = d.data();
 
+    // 🧠 防呆：避免 undefined / 格式錯
+    const title = m.title || "無標題";
+    const room = m.room || "無房間";
+
+    let startText = "無時間";
+
+    if (m.startTime) {
+      startText = new Date(m.startTime).toLocaleString();
+    }
+
     list.innerHTML += `
       <li>
-        ${m.title}
-        ｜${m.room}
-        ｜${new Date(m.startTime).toLocaleString()}
-        <button onclick="del('${d.id}')">
-          刪除
-        </button>
+        ${title}
+        ｜${room}
+        ｜${startText}
+        <button onclick="del('${d.id}')">刪除</button>
       </li>
     `;
 
   });
-
 }
 
 window.onload = async () => {
