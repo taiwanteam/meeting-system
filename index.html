@@ -111,37 +111,46 @@
     }
 
     /* ➕ 新增會議（強化防重複版） */
-    window.addMeeting = async function () {
-        if (!currentUser) return alert("請先登入");
+    /* 導入 runTransaction */
+import { 
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, 
+    runTransaction // 👈 必須確保有導入這個
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const title = document.getElementById("title").value;
-        const room = document.getElementById("room").value;
-        const startVal = document.getElementById("start").value;
-        const endVal = document.getElementById("end").value;
-        const addBtn = document.getElementById("addBtn");
+/* ➕ 新增會議（Transaction 絕對不重複版） */
+window.addMeeting = async function () {
+    if (!currentUser) return alert("請先登入");
 
-        if (!title || !room || !startVal || !endVal) return alert("請填寫完整資料");
+    const title = document.getElementById("title").value;
+    const room = document.getElementById("room").value;
+    const startVal = document.getElementById("start").value;
+    const endVal = document.getElementById("end").value;
+    const addBtn = document.getElementById("addBtn");
 
-        const newStart = new Date(startVal);
-        const newEnd = new Date(endVal);
+    if (!title || !room || !startVal || !endVal) return alert("請填寫完整資料");
 
-        if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
+    const newStart = new Date(startVal);
+    const newEnd = new Date(endVal);
 
-        // 步驟 1: 禁用按鈕防止重複連點
-        addBtn.disabled = true;
-        addBtn.textContent = "檢查衝突中...";
+    if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
 
-        try {
-            // 步驟 2: 重新抓取最新資料庫內容進行檢查
-            const snapshot = await getDocs(collection(db, "meetings"));
+    addBtn.disabled = true;
+    addBtn.textContent = "同步檢查中...";
+
+    try {
+        // 使用 Transaction 確保讀取與寫入是連貫的，不受延遲影響
+        await runTransaction(db, async (transaction) => {
+            
+            // 1. 在 Transaction 中重新抓取所有會議資料
+            const meetingsCol = collection(db, "meetings");
+            const snapshot = await getDocs(meetingsCol);
+            
             let isConflict = false;
-
             snapshot.forEach((d) => {
                 const m = d.data();
                 if (m.room === room) {
                     const existS = new Date(m.startTime);
                     const existE = new Date(m.endTime);
-                    // 嚴格交集判定
                     if (newStart < existE && newEnd > existS) {
                         isConflict = true;
                     }
@@ -149,11 +158,37 @@
             });
 
             if (isConflict) {
-                alert("❌ 該時段會議室已被預約！");
-                addBtn.disabled = false;
-                addBtn.textContent = "確認預約";
-                return;
+                throw "CONFLICT"; // 丟出錯誤跳出 Transaction
             }
+
+            // 2. 如果沒有衝突，直接寫入新文件
+            const newDocRef = doc(collection(db, "meetings"));
+            transaction.set(newDocRef, {
+                title,
+                room,
+                startTime: startVal,
+                endTime: endVal,
+                userEmail: currentUser.email,
+                createdAt: new Date().toISOString()
+            });
+        });
+
+        alert("✅ 預約成功！");
+        document.getElementById("title").value = "";
+        loadData();
+
+    } catch (e) {
+        if (e === "CONFLICT") {
+            alert("❌ 該時段會議室已被預約（剛剛有人搶先一步）！");
+        } else {
+            console.error("交易失敗: ", e);
+            alert("發生未知錯誤，請檢查網路後再試");
+        }
+    } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = "確認預約";
+    }
+};
 
             // 步驟 3: 寫入資料
             await addDoc(collection(db, "meetings"), {
