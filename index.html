@@ -57,7 +57,7 @@ import {
   signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-/* Firebase Config */
+/* Firebase Config（你已經填好了） */
 const firebaseConfig = {
   apiKey: "AIzaSyDQDfsnKG6nuUu8q1pw15ZQnPs_vvJa0ls",
   authDomain: "meeting-system-ee93f.firebaseapp.com",
@@ -69,100 +69,76 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
-
 const auth = getAuth(app);
-
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
-/* 登入 */
+/* 🔐 Google登入 */
 window.login = async function () {
-
   const result = await signInWithPopup(auth, provider);
-
   currentUser = result.user;
-
-  alert("登入：" + currentUser.email);
-
+  alert("登入成功：" + currentUser.email);
 };
 
-/* 載入 rooms */
+/* 🏢 載入會議室 */
 async function loadRooms() {
 
   const snapshot = await getDocs(collection(db, "rooms"));
-
   const select = document.getElementById("room");
 
-  select.innerHTML = "";
+  select.innerHTML = "<option value=''>請選擇會議室</option>";
 
   snapshot.forEach((d) => {
-
     const data = d.data();
 
     const opt = document.createElement("option");
-
     opt.value = data.name;
-
     opt.textContent = data.name;
 
     select.appendChild(opt);
-
   });
-
 }
 
-/* 新增會議 */
+/* ➕ 新增會議 */
 window.addMeeting = async function () {
 
   if (!currentUser) {
-
     alert("請先登入");
-
     return;
-
   }
 
   const title = document.getElementById("title").value;
-
   const room = document.getElementById("room").value;
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
 
-  const start = new Date(document.getElementById("start").value);
-
-  const end = new Date(document.getElementById("end").value);
+  /* 防呆 */
+  if (!title || !room || !start || !end) {
+    alert("請填完整資料");
+    return;
+  }
 
   await addDoc(collection(db, "meetings"), {
-
-    title,
-
-    room,
-
-    startTime: start,
-
+    title: title,
+    room: room,
+    startTime: start,   // ✔ 用字串（避免 Invalid Date）
     endTime: end,
-
     userEmail: currentUser.email,
-
-    createdAt: new Date()
-
+    createdAt: new Date().toISOString()
   });
 
   loadData();
-
 };
 
-/* 刪除 */
-window.del = async function(id) {
-
+/* 🗑️ 刪除 */
+window.del = async function (id) {
   await deleteDoc(doc(db, "meetings", id));
-
   loadData();
+};
 
-}
-
-/* 顯示列表 */
+/* 📋 顯示列表（正式穩定版） */
 async function loadData() {
 
   const snapshot = await getDocs(collection(db, "meetings"));
@@ -174,35 +150,36 @@ async function loadData() {
 
     const m = d.data();
 
-    // 🧠 防呆：避免 undefined / 格式錯
     const title = m.title || "無標題";
     const room = m.room || "無房間";
 
     let startText = "無時間";
+    let endText = "";
 
     if (m.startTime) {
       startText = new Date(m.startTime).toLocaleString();
+    }
+
+    if (m.endTime) {
+      endText = " ~ " + new Date(m.endTime).toLocaleString();
     }
 
     list.innerHTML += `
       <li>
         ${title}
         ｜${room}
-        ｜${startText}
+        ｜${startText}${endText}
         <button onclick="del('${d.id}')">刪除</button>
       </li>
     `;
-
   });
 }
 
-window.onload = async () => {
-
+/* 🚀 初始化 */
+window.onload = async function () {
   await loadRooms();
-
   await loadData();
-
-}
+};
 
 </script>
 
