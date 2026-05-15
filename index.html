@@ -103,7 +103,6 @@ async function loadRooms() {
 
 /* ➕ 新增會議 */
 window.addMeeting = async function () {
-
   if (!currentUser) {
     alert("請先登入");
     return;
@@ -111,24 +110,58 @@ window.addMeeting = async function () {
 
   const title = document.getElementById("title").value;
   const room = document.getElementById("room").value;
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
+  const startInput = document.getElementById("start").value;
+  const endInput = document.getElementById("end").value;
 
-  /* 防呆 */
-  if (!title || !room || !start || !end) {
-    alert("請填完整資料");
+  /* 1. 基本防呆 */
+  if (!title || !room || !startInput || !endInput) {
+    alert("請填寫完整資料");
     return;
   }
 
+  const newStart = new Date(startInput);
+  const newEnd = new Date(endInput);
+
+  if (newStart >= newEnd) {
+    alert("❌ 結束時間必須晚於開始時間");
+    return;
+  }
+
+  /* 2. 檢查衝突 (核心邏輯) */
+  const snapshot = await getDocs(collection(db, "meetings"));
+  let isConflict = false;
+
+  snapshot.forEach((d) => {
+    const m = d.data();
+    
+    // 只比較「同一個會議室」的預約
+    if (m.room === room) {
+      const existStart = new Date(m.startTime);
+      const existEnd = new Date(m.endTime);
+
+      // 檢查時間是否重疊
+      if (newStart < existEnd && newEnd > existStart) {
+        isConflict = true;
+      }
+    }
+  });
+
+  if (isConflict) {
+    alert("❌ 該時段會議室已被預約，請選擇其他時間或會議室");
+    return;
+  }
+
+  /* 3. 無衝突，寫入資料庫 */
   await addDoc(collection(db, "meetings"), {
     title: title,
     room: room,
-    startTime: start,   // ✔ 用字串（避免 Invalid Date）
-    endTime: end,
+    startTime: startInput,  // 存入字串 "2026-05-15T14:30"
+    endTime: endInput,
     userEmail: currentUser.email,
     createdAt: new Date().toISOString()
   });
 
+  alert("✅ 預約成功！");
   loadData();
 };
 
