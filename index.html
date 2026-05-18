@@ -28,6 +28,15 @@
         .minguo-title { font-size: 16px; color: #e67e22; font-weight: bold; margin-bottom: 10px; text-align: center; }
         .fc-event { cursor: pointer; padding: 2px 5px; }
         .calendar-header-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        /* ✨ 核心修正：強制日曆文字換行 */
+        .fc-event-title {
+            white-space: normal !important;
+            word-break: break-all !important;
+        }
+        .fc-event-main {
+            line-height: 1.4 !important;
+            padding: 2px 0;
+        }
     </style>
 </head>
 <body>
