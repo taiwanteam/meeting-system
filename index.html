@@ -324,7 +324,7 @@
                 let deleteCount = 0;
 
                 for (const d of snapshot.docs) {
-                    const m of d.data();
+                    const m = d.data();
                     const meetingEndTime = new Date(m.endTime);
                     
                     if (meetingEndTime < oneMonthAgo) {
