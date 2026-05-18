@@ -167,15 +167,25 @@
                 msg += `結束時間：${toMinguoMsg(props.endTime)}`;
                 
                 // 判斷權限：建立者本人，或者是管理員
-                const hasPermission = (currentUser && props.userEmail === currentUser.email) || (currentUser && ADMIN_EMAILS.includes(currentUser.email));
-
-                if (hasPermission) {
-                    if (confirm(`${msg}\n\n確定要刪除此預約嗎？`)) {
+                const isOwner = currentUser && props.userEmail === currentUser.email;
+                if (isOwner) {
+                    // 只有自己建立的會議，才會跳出「確認刪除」視窗
+                    if (confirm(`${msg}\n\n[您是此預約建立者] 確定要刪除此預約嗎？`)) {
                         delMeeting(info.event.id);
                     }
                 } else {
-                    alert(msg);
+                    // 🔒 只要不是本人（管你是管理者還是一般同仁），一律跳出唯讀警告，不給刪除視窗！
+                    alert(`${msg}\n\n🔒 唯讀模式：您不是此會議的預約者，無法刪除他人的會議。`);
                 }
+                // const hasPermission = (currentUser && props.userEmail === currentUser.email) || (currentUser && ADMIN_EMAILS.includes(currentUser.email));
+
+                // if (hasPermission) {
+                //     if (confirm(`${msg}\n\n確定要刪除此預約嗎？`)) {
+                //         delMeeting(info.event.id);
+                //     }
+                // } else {
+                //     alert(msg);
+                // }
             }
         });
         calendar.render();
