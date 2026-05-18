@@ -29,14 +29,32 @@
         .fc-event { cursor: pointer; padding: 2px 5px; }
         .calendar-header-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         /* ✨ 核心修正：強制日曆文字換行 */
+        .fc-event, .fc-event-main {
+            white-space: normal !important;
+            flex-direction: column !important;
+            display: flex !important;
+        }
+        
         .fc-event-title {
+            white-space: pre-line !important; /* 💡 pre-line 能完美解析 \n 換行 */
+            word-break: break-all !important;
+            font-size: 14px !important;       /* 稍微放大字體 */
+            line-height: 1.5 !important;
+            padding: 2px 0 !important;
+        }
+
+        /* 讓日曆格子長高，換行後預約多的時候才不會擠爆 */
+        .fc .fc-daygrid-day-frame {
+            min-height: 110px !important; 
+        }
+        /* .fc-event-title {
             white-space: normal !important;
             word-break: break-all !important;
         }
         .fc-event-main {
             line-height: 1.4 !important;
             padding: 2px 0;
-        }
+        } */
     </style>
 </head>
 <body>
