@@ -70,14 +70,26 @@
             white-space: pre-line !important; 
             word-break: break-all !important;
             font-size: 14px !important;       
-            line-height: 1.0 !important;
+            line-height: 1.5 !important;
             color: #333333 !important; /* 深字體，高對比度 */
-            font-weight: 500;
+            font-weight: bold !important;      
+            display: inline !important;        /* 💡 強制與小圓點排在同一行 */
+            vertical-align: middle;
+            /* font-weight: 500; */
         }
 
-        /* 5. 移除 FullCalendar 預設前面那個會擋到字的小圓點 */
+        /* /* 5. 移除 FullCalendar 預設前面那個會擋到字的小圓點 */
         .fc-daygrid-event-dot {
             display: none !important;
+        } */
+        /* 5. ✨ 強制叫回「原本會隨會議室變色」的小圓點！ */
+        .fc-daygrid-event-dot {
+            display: inline-block !important;  /* 💡 把原本的 none 改成 inline-block，點點就復活了 */
+            margin-right: 6px !important;      /* 讓圓點跟文字保持舒適距離 */
+            vertical-align: middle;
+            
+            /* 💡 這裡可以自由調整圓點的大小 (預設邊框通常是 4px) */
+            border-width: 5px !important;      /* 改成 5px 或 6px，點點會更大、更清晰 */
         }
 
         /* 讓日曆格子長高，換行後資料多才不會擠壓 */
