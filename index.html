@@ -144,20 +144,20 @@
             eventClick: function(info) {
                 const props = info.event.extendedProps;
                 
-                // 民國年時間格式轉換函式
+                // 時間格式轉換函式 (月/日 時:分)
                 const toMinguoMsg = (dateStr) => {
                     if (!dateStr) return "未設定";
                     const d = new Date(dateStr);
-                    const yy = d.getFullYear() - 1911;
-                    const mm = d.getMonth() + 1;                  // 取得月份 (例如 5)
-                    const dd = d.getDate();                       // 取得日期 (例如 18)
-                    const hh = String(d.getHours()).padStart(2, '0');  // 24小時制的時
-                    const min = String(d.getMinutes()).padStart(2, '0');// 分
+                    const mm = d.getMonth() + 1;                  
+                    const dd = d.getDate();                       
+                    const hh = String(d.getHours()).padStart(2, '0');  
+                    const min = String(d.getMinutes()).padStart(2, '0');
                     return `${mm}/${dd} ${hh}:${min}`;
                 };
 
-                // 過濾並清理只留下乾淨的會議主題文字
-                const cleanTitle = info.event.title.replace(/\[.*\]\s*/, '').replace(/👤.*/, '').trim();
+                // 💡 先抓取第一行，並自動把開頭的「📝 」圖示與空格濾掉，保留乾淨的會議名稱
+                const firstLine = info.event.title.split('\n')[0].trim();
+                const cleanTitle = firstLine.replace(/^📝\s*/, '');
 
                 let msg = `會議：${cleanTitle}\n`;
                 msg += `會議室：${props.room}\n`;
@@ -166,26 +166,16 @@
                 msg += `開始時間：${toMinguoMsg(props.startTime)}\n`;
                 msg += `結束時間：${toMinguoMsg(props.endTime)}`;
                 
-                // 判斷權限：建立者本人，或者是管理員
+                // 🔒 嚴格的一視同仁檢查：只認是不是建立者本人
                 const isOwner = currentUser && props.userEmail === currentUser.email;
                 if (isOwner) {
-                    // 只有自己建立的會議，才會跳出「確認刪除」視窗
                     if (confirm(`${msg}\n\n[您是此預約建立者] 確定要刪除此預約嗎？`)) {
                         delMeeting(info.event.id);
                     }
                 } else {
-                    // 🔒 只要不是本人（管你是管理者還是一般同仁），一律跳出唯讀警告，不給刪除視窗！
+                    // 🔒 非本人點擊一律唯讀
                     alert(`${msg}\n\n🔒 唯讀模式：您不是此會議的預約者，無法刪除他人的會議。`);
                 }
-                // const hasPermission = (currentUser && props.userEmail === currentUser.email) || (currentUser && ADMIN_EMAILS.includes(currentUser.email));
-
-                // if (hasPermission) {
-                //     if (confirm(`${msg}\n\n確定要刪除此預約嗎？`)) {
-                //         delMeeting(info.event.id);
-                //     }
-                // } else {
-                //     alert(msg);
-                // }
             }
         });
         calendar.render();
@@ -249,7 +239,7 @@
             const opt = document.createElement("option");
             opt.value = roomName;
             opt.textContent = roomName;
-            if (roomName === "A會議室") opt.selected = true; // 預設選取 A 會議室
+            if (roomName === "A會議室") opt.selected = true; 
             select.appendChild(opt);
         });
     }
@@ -334,7 +324,7 @@
                 let deleteCount = 0;
 
                 for (const d of snapshot.docs) {
-                    const m = d.data();
+                    const m of d.data();
                     const meetingEndTime = new Date(m.endTime);
                     
                     if (meetingEndTime < oneMonthAgo) {
@@ -365,7 +355,8 @@
 
                 events.push({
                     id: d.id,
-                    title: `[${m.room}] ${m.title} 👤${m.userName || '未填'}`,
+                    // 💡 加上精緻小圖示後的換行格式
+                    title: `📝 ${m.title}\n 📍 [${m.room}]\n 👤 ${m.userName || '未填'}`,
                     start: m.startTime,
                     end: m.endTime,
                     backgroundColor: eventColor,
@@ -375,7 +366,7 @@
                         dept: m.dept,
                         userName: m.userName,
                         userEmail: m.userEmail,
-                        startTime: m.startTime, // 💡 確保將正確的時間變數傳給彈窗讀取
+                        startTime: m.startTime, 
                         endTime: m.endTime
                     }
                 });
