@@ -8,11 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
-    <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 1000px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
+<style>
+        /* 放大容器最大寬度至 1300px，大螢幕友善 */
+        body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 1300px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .sidebar { flex: 1; min-width: 300px; }
-        .main-content { flex: 2; min-width: 500px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .sidebar { flex: 1; min-width: 300px; max-width: 350px; }
+        
+        /* 調整日曆區塊比例 (flex 改為 3) */
+        .main-content { flex: 3; min-width: 500px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
         input, select, button { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
@@ -25,36 +28,70 @@
         .cleanup-btn:hover { background-color: #e68a00; }
 
         #calendar { margin-top: 10px; }
-        .minguo-title { font-size: 16px; color: #e67e22; font-weight: bold; margin-bottom: 10px; text-align: center; }
-        .fc-event { cursor: pointer; padding: 2px 5px; }
+        .minguo-title { font-size: 18px; color: #e67e22; font-weight: bold; margin-bottom: 10px; text-align: center; }
         .calendar-header-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        /* ✨ 核心修正：強制日曆文字換行 */
+        
+        /* =======================================================
+           ✨ FullCalendar 樣式終極優化 (消除割裂感、完美換行)
+           ======================================================= */
+        
+        /* 1. 移除預設的按鈕外框與背景，改用簡潔的左側色條 */
+        .fc-v-event, .fc-h-event {
+            background-color: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 4px 2px !important;
+        }
+
+        /* 2. 強制內層結構垂直排列與換行 */
         .fc-event, .fc-event-main {
             white-space: normal !important;
             flex-direction: column !important;
             display: flex !important;
+            width: 100%;
         }
         
-        .fc-event-title {
-            white-space: pre-line !important; /* 💡 pre-line 能完美解析 \n 換行 */
-            word-break: break-all !important;
-            font-size: 14px !important;       /* 稍微放大字體 */
-            line-height: 1.5 !important;
-            padding: 2px 0 !important;
+        /* 3. 設計專屬的會議文字卡片：左側粗色條、微灰底色 */
+        .fc-event-main {
+            background-color: #f8f9fa !important; /* 淡淡的底色 */
+            border-left: 5px solid var(--event-bg-color, #4285f4) !important; /* 動態綁定左側會議室顏色 */
+            padding: 6px 8px !important;
+            border-radius: 0 6px 6px 0 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .fc-event-main:hover {
+            background-color: #f1f3f4 !important; /* 滑鼠滑過微變深 */
         }
 
-        /* 讓日曆格子長高，換行後預約多的時候才不會擠爆 */
-        .fc .fc-daygrid-day-frame {
-            min-height: 110px !important; 
-        }
-        /* .fc-event-title {
-            white-space: normal !important;
+        /* 4. 解析 \n 換行，並放大字體與設定行高 */
+        .fc-event-title {
+            white-space: pre-line !important; 
             word-break: break-all !important;
+            font-size: 14px !important;       
+            line-height: 1.5 !important;
+            color: #333333 !important; /* 深字體，高對比度 */
+            font-weight: 500;
         }
-        .fc-event-main {
-            line-height: 1.4 !important;
-            padding: 2px 0;
-        } */
+
+        /* 5. 移除 FullCalendar 預設前面那個會擋到字的小圓點 */
+        .fc-daygrid-event-dot {
+            display: none !important;
+        }
+
+        /* 讓日曆格子長高，換行後資料多才不會擠壓 */
+        .fc .fc-daygrid-day-frame {
+            min-height: 120px !important; 
+        }
+
+        /* 放大日期數字 */
+        .fc .fc-daygrid-day-number {
+            font-size: 15px !important;
+            font-weight: bold;
+            padding: 6px 10px !important;
+            color: #444;
+        }
     </style>
 </head>
 <body>
