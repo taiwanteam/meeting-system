@@ -3,63 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會議室預約系統</title>
+    <title>會議室預約系統 - 行事曆版</title>
+    
+    <!-- 引入 FullCalendar 樣式與主程式 -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
+        body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 1000px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .sidebar { flex: 1; min-width: 300px; }
+        .main-content { flex: 2; min-width: 500px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
         input, select, button { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         button { background-color: #4285f4; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover { background-color: #357ae8; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .del-btn { background-color: #ff4d4d; width: auto; padding: 6px 12px; font-size: 14px; }
-        ul { list-style: none; padding: 0; }
-        li { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4285f4; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .meeting-time { font-size: 14px; color: #666; margin: 5px 0; }
-        .user-info { font-size: 13px; color: #888; border-top: 1px solid #eee; padding-top: 5px; }
+        
+        /* 日曆自訂樣式調整 */
+        #calendar { margin-top: 10px; }
+        .minguo-title { font-size: 16px; color: #e67e22; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .fc-event { cursor: pointer; padding: 2px 5px; }
     </style>
 </head>
 <body>
 
-    <h2>📅 會議室預約系統</h2>
+    <h2>📅 會議室預約系統 (行事曆版)</h2>
     
-    <div class="card">
-        <button id="loginBtn" onclick="login()">🔑 使用 Google 帳號登入</button>
-        <p id="userInfo" style="margin-top:10px; color: #28a745; font-weight:bold; display:none;"></p>
+    <div class="container">
+        <!-- 左側：登入與操作面板 -->
+        <div class="sidebar">
+            <div class="card">
+                <button id="loginBtn" onclick="login()">🔑 使用 Google 帳號登入</button>
+                <p id="userInfo" style="margin-top:10px; color: #28a745; font-weight:bold; display:none;"></p>
+            </div>
+
+            <div class="card">
+                <h3>➕ 新增預約</h3>
+                
+                <label>會議名稱</label>
+                <input id="title" type="text" placeholder="輸入會議主題">
+
+                <label>科室名稱</label>
+                <input id="dept" type="text" placeholder="例如：行政科">
+
+                <label>預約者姓名</label>
+                <input id="userName" type="text" placeholder="請輸入姓名">
+
+                <label>選擇會議室</label>
+                <select id="room">
+                    <option value="">載入中...</option>
+                </select>
+
+                <label>開始時間</label>
+                <input id="start" type="datetime-local">
+
+                <label>結束時間</label>
+                <input id="end" type="datetime-local">
+
+                <button id="addBtn" onclick="addMeeting()">確認預約</button>
+            </div>
+        </div>
+
+        <!-- 右側：行事曆主體 -->
+        <div class="main-content">
+            <div id="minguoDisplay" class="minguo-title">請先登入以查看預約行事曆</div>
+            <div id="calendar"></div>
+        </div>
     </div>
-
-    <div class="card">
-        <h3>➕ 新增預約</h3>
-        
-        <label>會議名稱</label>
-        <input id="title" type="text" placeholder="請輸入會議主題">
-
-        <label>科室名稱</label>
-        <input id="dept" type="text" placeholder="請輸入科室(例如：行政科)">
-
-        <label>預約者姓名</label>
-        <input id="userName" type="text" placeholder="請輸入中文姓名">
-
-        <label>選擇會議室</label>
-        <select id="room">
-            <option value="">載入中...</option>
-        </select>
-
-        <label>開始時間</label>
-        <input id="start" type="datetime-local">
-
-        <label>結束時間</label>
-        <input id="end" type="datetime-local">
-
-        <button id="addBtn" onclick="addMeeting()">確認預約</button>
-    </div>
-
-    <h3>📋 會議列表 (民國年顯示)
-    <button id="cleanupBtn" onclick="autoCleanup()" style="display:none; width:auto; background-color:#ff9800; font-size:12px; padding:5px 10px; margin-left:10px;">
-    🧹 清理一個月前舊資料
-    </button>
-    </h3>
-    <ul id="list"></ul>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -67,7 +79,7 @@
         getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, runTransaction 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { 
-        getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,setPersistence, browserSessionPersistence
+        getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserSessionPersistence
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -84,93 +96,101 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-    const ADMIN_EMAILS = ["m700912@gmail.com", "another-admin@gmail.com"];
     let currentUser = null;
+    let calendar = null;
 
-// 監聽登入狀態
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        currentUser = user;
-        document.getElementById("userInfo").innerText = "✅ 已使用 Google 帳號登入";
-        document.getElementById("userInfo").style.display = "block";
-        document.getElementById("loginBtn").style.display = "none";
-        
-        // 💡 判斷是否為管理員，顯示清理按鈕
-        if (ADMIN_EMAILS.includes(user.email)) {
-            document.getElementById("cleanupBtn").style.display = "inline-block";
-        }
+    // 會議室顏色對照表（可自行擴充）
+    const roomColors = {
+        "第一會議室": "#4285f4",
+        "第二會議室": "#34a853",
+        "簡報室": "#fbbc05",
+        "預設": "#9c27b0"
+    };
 
-        loadData();
-        loadRooms();
-    } else {
-        document.getElementById("list").innerHTML = "請先登入以查看預約清單";
-        document.getElementById("cleanupBtn").style.display = "none";
-    }
-});
-
-// 💡 新增清理函式
-window.autoCleanup = async function() {
-    if (!confirm("確定要刪除所有「一個月以前」的舊預約嗎？此動作無法復原。")) return;
-    
-    const cleanupBtn = document.getElementById("cleanupBtn");
-    cleanupBtn.disabled = true;
-    cleanupBtn.textContent = "⌛ 正在清理中...";
-
-    try {
-        const now = new Date();
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setDate(now.getDate() - 30); 
-        const expireLimit = oneMonthAgo.toISOString();
-
-        // 抓取所有資料進行比對
-        const q = query(collection(db, "meetings"));
-        const snapshot = await getDocs(q);
-        
-        let count = 0;
-        const promises = [];
-
-        snapshot.forEach((d) => {
-            if (d.data().endTime < expireLimit) {
-                promises.push(deleteDoc(doc(db, "meetings", d.id)));
-                count++;
+    // 初始化 FullCalendar
+    function initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'zh-tw',
+            navLinks: true, 
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            buttonText: {
+                today: '今天',
+                month: '月',
+                week: '週',
+                day: '日'
+            },
+            // 監聽日曆切換事件，用來即時更新畫面上方「民國年」的標題
+            datesSet: function(info) {
+                updateMinguoTitle(info.view.title);
+            },
+            // 點擊行程時觸發彈窗（提供刪除功能）
+            eventClick: function(info) {
+                const props = info.event.extendedProps;
+                let msg = `會議：${info.event.title}\n會議室：${props.room}\n科室：${props.dept}\n預約者：${props.userName}`;
+                
+                if (currentUser && props.userEmail === currentUser.email) {
+                    if (confirm(`${msg}\n\n[您是此預約建立者] 確定要刪除此預約嗎？`)) {
+                        delMeeting(info.event.id);
+                    }
+                } else {
+                    alert(msg);
+                }
             }
         });
-
-        await Promise.all(promises); // 等待所有刪除動作完成
-        alert(`✅ 清理完成！共刪除 ${count} 筆過期資料。`);
-        loadData(); // 重新整理列表
-    } catch (e) {
-        console.error(e);
-        alert("清理失敗，請檢查權限或網路。");
-    } finally {
-        cleanupBtn.disabled = false;
-        cleanupBtn.textContent = "🧹 清理一個月前舊資料";
+        calendar.render();
     }
-};
 
-    // 暴露函式給全域 (解決 login is not defined)
-    // window.login = async function () {
-    //     try { await signInWithPopup(auth, provider); } catch (e) { alert("登入失敗"); }
-    // };
-    window.login = async function () {
-    try {
-        // 1. 設定持久性：只在目前瀏覽器分頁/視窗開啟時有效
-        await setPersistence(auth, browserSessionPersistence);
-        
-        // 2. 啟動 Google 登入視窗
-        await signInWithPopup(auth, provider);
-        
-        console.log("登入成功，設定為 Session 持久化 (關閉分頁即登出)");
-    } catch (e) {
-        console.error("登入錯誤細節：", e);
-        if (e.code === "auth/popup-blocked") {
-            alert("❌ 登入視窗被瀏覽器攔截，請允許彈出視窗。");
+    // 將日曆標題轉換成民國年文字
+    function updateMinguoTitle(viewTitle) {
+        // 匹配四碼西元年份，例如 "2026年5月"
+        const yearMatch = viewTitle.match(/\d{4}/);
+        if (yearMatch) {
+            const currentYear = parseInt(yearMatch[0]);
+            const minguoYear = currentYear - 1911;
+            document.getElementById("minguoDisplay").innerText = `💡 目前檢視：民國 ${minguoYear} 年 (${viewTitle})`;
         } else {
-            alert("登入失敗：" + e.message);
+            document.getElementById("minguoDisplay").innerText = `💡 目前檢視：${viewTitle}`;
         }
     }
-};
 
+    // 監聽登入狀態
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById("userInfo").innerText = "✅已使用Google帳號登入";
+            document.getElementById("userInfo").style.display = "block";
+            document.getElementById("loginBtn").style.display = "none";
+            
+            initCalendar(); // 登入後初始化日曆
+            loadRooms();
+            loadData();
+        } else {
+            document.getElementById("calendar").innerHTML = "";
+            document.getElementById("minguoDisplay").innerText = "請先登入以查看預約行事曆";
+        }
+    });
+
+    // 登入功能
+    window.login = async function () {
+        try {
+            await setPersistence(auth, browserSessionPersistence);
+            await signInWithPopup(auth, provider);
+        } catch (e) {
+            if (e.code === "auth/popup-blocked") {
+                alert("❌ 登入視窗被瀏覽器攔截，請允許彈出視窗。");
+            } else {
+                alert("登入失敗：" + e.message);
+            }
+        }
+    };
+
+    // 載入會議室清單
     async function loadRooms() {
         const snapshot = await getDocs(collection(db, "rooms"));
         const select = document.getElementById("room");
@@ -183,7 +203,7 @@ window.autoCleanup = async function() {
         });
     }
 
-    /* ➕ 新增預約 (Transaction 絕對不重複版) */
+    /* ➕ 新增預約 */
     window.addMeeting = async function () {
         if (!currentUser) return alert("請先登入");
 
@@ -223,14 +243,10 @@ window.autoCleanup = async function() {
                 const newDocRef = doc(collection(db, "meetings"));
                 transaction.set(newDocRef, {
                     title, dept, userName, room,
-                    startTime: new Date(startVal).toISOString(), 
-                    endTime: new Date(endVal).toISOString(), 
+                    startTime: startVal,
+                    endTime: endVal,
                     userEmail: currentUser.email,
                     createdAt: new Date().toISOString()
-                    // startTime: startVal,
-                    // endTime: endVal,
-                    // userEmail: currentUser.email,
-                    // createdAt: new Date().toISOString()
                 });
             });
 
@@ -246,48 +262,49 @@ window.autoCleanup = async function() {
         }
     };
 
-    window.del = async function (id) {
-        if (confirm("確定刪除此預約？")) {
-            await deleteDoc(doc(db, "meetings", id));
-            loadData();
-        }
-    };
+    // 刪除會議功能
+    async function delMeeting(id) {
+        await deleteDoc(doc(db, "meetings", id));
+        loadData();
+    }
 
-    /* 📋 載入列表 (民國年轉換) */
+    /* 📋 載入資料並放入行事曆 */
     async function loadData() {
-        const list = document.getElementById("list");
+        if (!calendar) return;
+        
         try {
-            const q = query(collection(db, "meetings"), orderBy("startTime", "asc"));
-            const snapshot = await getDocs(q);
-            list.innerHTML = "";
-
-            const toMinguo = (dateStr) => {
-                const d = new Date(dateStr);
-                const yy = d.getFullYear() - 1911;
-                const mm = d.getMonth() + 1;
-                const dd = d.getDate();
-                const hh = String(d.getHours()).padStart(2, '0');
-                const min = String(d.getMinutes()).padStart(2, '0');
-                return `民國 ${yy}/${mm}/${dd} ${hh}:${min}`;
-            };
+            const snapshot = await getDocs(collection(db, "meetings"));
+            const events = [];
 
             snapshot.forEach((d) => {
                 const m = d.data();
-                // 檢查目前登入的人，是不是這筆會議的建立者
-                const isOwner = currentUser && m.userEmail === currentUser.email;
-                list.innerHTML += `
-                    <li>
-                        <strong>${m.title}</strong> ｜ <span style="color:#4285f4">${m.room}</span><br>
-                        <div class="meeting-time">⏰ ${toMinguo(m.startTime)} ~ ${toMinguo(m.endTime)}</div>
-                        <div class="user-info">
-                            🏢 科室：${m.dept || "未填"} ｜ 👤 預約者：${m.userName || "未填"}<br>
+                
+                // 根據會議室名稱給予不同顏色
+                const eventColor = roomColors[m.room] || roomColors["預設"];
 
-                        </div>
-                        ${isOwner ? `<button class="del-btn" onclick="del('${d.id}')">刪除</button>` : ''}
-                    </li>
-                `;
+                events.push({
+                    id: d.id,
+                    title: `[${m.room}] ${m.title}`,
+                    start: m.startTime,
+                    end: m.endTime,
+                    backgroundColor: eventColor,
+                    borderColor: eventColor,
+                    extendedProps: {
+                        room: m.room,
+                        dept: m.dept,
+                        userName: m.userName,
+                        userEmail: m.userEmail
+                    }
+                });
             });
-        } catch (e) { console.log("排序索引建立中..."); }
+
+            // 清除現有事件並重新載入新事件
+            calendar.removeAllEvents();
+            calendar.addEventSource(events);
+            
+        } catch (e) { 
+            console.error("載入日曆資料失敗：", e); 
+        }
     }
 </script>
 </body>
