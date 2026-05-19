@@ -121,25 +121,44 @@
             padding: 6px 10px !important;
             color: #444;
         }
-/* =======================================================
-   🎛️ 修正 FullCalendar 標頭按鈕重疊問題（讓 `< >` 與 今天 並排錯開）
+   /* =======================================================
+   🎛️ FullCalendar 標頭按鈕大修正（解決左右按鈕組重疊、交錯問題）
    ======================================================= */
-/* 確保左側的按鈕容器使用彈性排版，讓子元素自然在同一行並排 */
+
+/* 1. 【左側按鈕群】強迫 `< >` 與 `今天` 自然在同一行並排錯開 */
 .fc .fc-toolbar-chunk:first-child {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important; /* 調整這個值可以改變兩組按鈕之間的間距 */
+    gap: 8px !important; /* 按鈕之間的舒適間距 */
 }
 
-/* 移除可能導致按鈕飛出去的強制絕對定位或錯誤外距 */
+/* 2. 【右側按鈕群】強迫 `月 週 日` 容器保持彈性排列，防擠壓 */
+.fc .fc-toolbar-chunk:last-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+}
+
+/* 3. 【全域按鈕大釋放】移除任何可能導致按鈕飛出去或交錯的強制絕對定位 */
+.fc .fc-button,
 .fc .fc-today-button,
 .fc .fc-button-group {
     position: static !important;
     margin: 0 !important;
 }
 
-/* 確保「今天」按鈕有舒適的內距與高度，不與箭頭擠壓 */
-.fc .fc-today-button {
+/* 4. 優化「今天」與「月週日」按鈕的點擊高度與內距，讓它們等高、看起來更一致 */
+.fc .fc-button {
     padding: 0.4em 0.65em !important;
     height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 如果您的「月週日」是緊黏在一起的按鈕組，確保它們內部的按鈕維持橫向排列 */
+.fc .fc-button-group {
+    display: inline-flex !important;
+    flex-direction: row !important;
 }
