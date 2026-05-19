@@ -1,4 +1,4 @@
-        /* 放大容器最大寬度至 1300px，大螢幕友善 */
+  /* 放大容器最大寬度至 1300px，大螢幕友善 */
         body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 1300px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; }
         .sidebar { flex: 1; min-width: 300px; max-width: 350px; }
@@ -25,7 +25,6 @@
            ======================================================= */
         
         /* 1. 移除預設的按鈕外框與背景，改用簡潔的左側色條 */
-/* 1. 移除預設的按鈕外框與背景，改用簡潔的左側色條 */
         .fc-v-event, .fc-h-event {
             background-color: transparent !important;
             border: none !important;
@@ -33,22 +32,16 @@
             margin: 4px 2px !important;
         }
 
-        /* 2. 【分流修改】只有在「月檢視」下，才強制內層結構垂直排列 */
-        .fc-dayGridMonth-view .fc-event, 
-        .fc-dayGridMonth-view .fc-event-main {
+        /* 2. 強制內層結構垂直排列與換行 */
+        .fc-event, .fc-event-main {
             white-space: normal !important;
             flex-direction: column !important;
             display: flex !important;
             width: 100%;
         }
         
-        /* 3. 【分流修改】設計專屬的會議文字卡片：只在「月檢視」維持滿版灰卡 */
-        .fc-dayGridMonth-view .fc-event-main {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
+        /* 3. 設計專屬的會議文字卡片：左側粗色條、微灰底色 */
+        .fc-event-main {
             background-color: #f8f9fa !important; /* 淡淡的底色 */
             border-left: 5px solid var(--event-bg-color, #4285f4) !important; /* 動態綁定左側會議室顏色 */
             padding: 6px 8px !important;
@@ -57,36 +50,8 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .fc-dayGridMonth-view .fc-event-main:hover {
+        .fc-event-main:hover {
             background-color: #f1f3f4 !important; /* 滑鼠滑過微變深 */
-        }
-
-        /* 🧭 【週檢視與日檢視：強化防裁切版】讓卡片與內層文字容器完全撐開 */
-        .fc-timeGridWeek-view .fc-event-main,
-        .fc-timeGridDay-view .fc-event-main {
-            display: flex !important;
-            flex-direction: column !important; /* 強制內容由上往下排 */
-            background-color: #f8f9fa !important; 
-            border-left: 4px solid var(--event-bg-color, #4285f4) !important; 
-            padding: 6px 8px !important;
-            border-radius: 0 4px 4px 0 !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            white-space: normal !important; 
-            overflow: visible !important; /* 🛠️ 防止內容被裁剪 */
-            cursor: pointer;
-            height: auto !important; /* 🛠️ 允許高度自動擴展 */
-        }
-
-        /* 🛠️ 強制週/日檢視內部的所有 FullCalendar 內建文字容器解除高度與換行限制 */
-        .fc-timeGridWeek-view .fc-event-title-container,
-        .fc-timeGridDay-view .fc-event-title-container,
-        .fc-timeGridWeek-view .fc-event-title,
-        .fc-timeGridDay-view .fc-event-title {
-            display: block !important;
-            white-space: pre-line !important; /* 確保 \n 正常換行 */
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
         }
 
         /* 4. 解析 \n 換行，並放大字體與設定行高 */
@@ -103,10 +68,10 @@
 
         /* 5. ✨ 強制叫回「原本會隨會議室變色」的小圓點！ */
         .fc-daygrid-event-dot {
-            display: inline-block !important;  
-            margin-right: 6px !important;      
+            display: inline-block !important;  /* 💡 把原本的 none 改成 inline-block，點點就復活了 */
+            margin-right: 6px !important;      /* 讓圓點跟文字保持舒適距離 */
             vertical-align: middle;
-            border-width: 5px !important;      
+            border-width: 5px !important;      /* 改成 5px 或 6px，點點會更大、更清晰 */
         }
 
         /* 讓日曆格子長高，換行後資料多才不會擠壓 */
@@ -120,7 +85,7 @@
             font-weight: bold;
             padding: 6px 10px !important;
             color: #444;
-        }
+        } 
    /* =======================================================
    🎛️ FullCalendar 標頭按鈕大修正（解決左右按鈕組重疊、交錯問題）
    ======================================================= */
