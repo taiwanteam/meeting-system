@@ -380,12 +380,13 @@
 
             alert("✅ 預約成功！");
            // ✨【欄位自動清空】預約成功後，將所有輸入欄位恢復成空白或預設值
-            titleInput.value = "";
-            deptInput.value = "";
-            userNameInput.value = "";
-            startInput.value = "";
-            endInput.value = "";
-            roomSelect.selectedIndex = 0; // 恢復成下拉選單的第一個選項 (A會議室)
+          // ✨ 修正後的欄位自動清空（直接對齊您原本的 HTML 欄位 ID）
+            document.getElementById("title").value = "";
+            document.getElementById("dept").value = "";
+            document.getElementById("userName").value = "";
+            document.getElementById("start").value = "";
+            document.getElementById("end").value = "";
+            document.getElementById("room").selectedIndex = 0; // 恢復成選單第一個
             loadData();
         } catch (e) {
             if (e === "CONFLICT") alert("❌ 該時段已被預約！");
