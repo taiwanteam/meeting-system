@@ -59,7 +59,8 @@
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                // right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                right: ''
             },
             buttonText: { today: '今天', month: '月', week: '週', day: '日' },
             datesSet: function(info) {
