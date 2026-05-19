@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
-<style>
+    <style>
         /* 放大容器最大寬度至 1300px，大螢幕友善 */
         body { font-family: "Microsoft JhengHei", sans-serif; line-height: 1.6; max-width: 1300px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -75,20 +75,13 @@
             font-weight: bold !important;      
             display: inline !important;        /* 💡 強制與小圓點排在同一行 */
             vertical-align: middle;
-            /* font-weight: 500; */
         }
 
-        /* /* 5. 移除 FullCalendar 預設前面那個會擋到字的小圓點 */
-        .fc-daygrid-event-dot {
-            display: none !important;
-        } */
         /* 5. ✨ 強制叫回「原本會隨會議室變色」的小圓點！ */
         .fc-daygrid-event-dot {
             display: inline-block !important;  /* 💡 把原本的 none 改成 inline-block，點點就復活了 */
             margin-right: 6px !important;      /* 讓圓點跟文字保持舒適距離 */
             vertical-align: middle;
-            
-            /* 💡 這裡可以自由調整圓點的大小 (預設邊框通常是 4px) */
             border-width: 5px !important;      /* 改成 5px 或 6px，點點會更大、更清晰 */
         }
 
@@ -207,6 +200,10 @@
             eventDidMount: function(info) {
                 info.el.style.whiteSpace = 'normal'; // 允許換行，確保長字完整呈現
                 info.el.style.contentVisibility = 'auto';
+                
+                // ✨【動態 CSS 變數綁定】將該會議室的顏色塞到 CSS 變數中，左側就會變色
+                const color = info.event.backgroundColor;
+                info.el.style.setProperty('--event-bg-color', color);
             },
             headerToolbar: {
                 left: 'prev,next today',
@@ -225,31 +222,45 @@
                     if (!dateStr) return "未設定";
                     const d = new Date(dateStr);
                     const mm = d.getMonth() + 1;                  
-                    const dd = d.getDate();                       
+                    const dd = d.getDate();                        
                     const hh = String(d.getHours()).padStart(2, '0');  
                     const min = String(d.getMinutes()).padStart(2, '0');
                     return `${mm}/${dd} ${hh}:${min}`;
                 };
 
-                // 💡 先抓取第一行，並自動把開頭的「📝 」圖示與空格濾掉，保留乾淨的會議名稱
-                const firstLine = info.event.title.split('\n')[0].trim();
-                const cleanTitle = firstLine.replace(/^📝\s*/, '');
-
-                let msg = `會議：${cleanTitle}\n`;
+                // 🛠️【Bug 1 修復】直接抓取資料來源中的 originTitle，不再用 split 分割字串抓錯標題
+                let msg = `會議：${props.originTitle}\n`;
                 msg += `會議室：${props.room}\n`;
                 msg += `科室：${props.dept || "未填"}\n`;
                 msg += `預約者：${props.userName || "未填"}\n`;
                 msg += `開始時間：${toMinguoMsg(props.startTime)}\n`;
                 msg += `結束時間：${toMinguoMsg(props.endTime)}`;
                 
-                // 🔒 嚴格的一視同仁檢查：只認是不是建立者本人
+                // 🔒 權限動態檢查
                 const isOwner = currentUser && props.userEmail === currentUser.email;
+                const isAdmin = currentUser && ADMIN_EMAILS.includes(currentUser.email);
+                
+                // 計算該會議是否為「一個月前」的舊資料 (以會議結束時間判斷)
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                const isOneMonthAgoData = new Date(props.endTime) < oneMonthAgo;
+
+                // 判斷是否符合刪除資格
                 if (isOwner) {
+                    // 條件 1：如果是建立者本人，隨時可刪除
                     if (confirm(`${msg}\n\n[您是此預約建立者] 確定要刪除此預約嗎？`)) {
                         delMeeting(info.event.id);
                     }
+                } else if (isAdmin && isOneMonthAgoData) {
+                    // 條件 2：如果是管理員，且該資料已經是「一個月前」的舊資料，允許刪除
+                    if (confirm(`${msg}\n\n[您是管理員，此為一個月前舊資料] 確定要手動強制刪除此歷史預約嗎？`)) {
+                        delMeeting(info.event.id);
+                    }
+                } else if (isAdmin && !isOneMonthAgoData) {
+                    // 提示 3：管理員點擊非本人的近期會議 -> 阻擋
+                    alert(`${msg}\n\n🔒 權限限制：管理員對非本人的近期會議僅有唯讀權限，只能刪除「一個月前」的舊資料。`);
                 } else {
-                    // 🔒 非本人點擊一律唯讀
+                    // 提示 4：一般人點擊非本人的會議 -> 阻擋
                     alert(`${msg}\n\n🔒 唯讀模式：您不是此會議的預約者，無法刪除他人的會議。`);
                 }
             }
@@ -368,7 +379,13 @@
             });
 
             alert("✅ 預約成功！");
-            document.getElementById("title").value = "";
+           // ✨【欄位自動清空】預約成功後，將所有輸入欄位恢復成空白或預設值
+            titleInput.value = "";
+            deptInput.value = "";
+            userNameInput.value = "";
+            startInput.value = "";
+            endInput.value = "";
+            roomSelect.selectedIndex = 0; // 恢復成下拉選單的第一個選項 (A會議室)
             loadData();
         } catch (e) {
             if (e === "CONFLICT") alert("❌ 該時段已被預約！");
@@ -431,14 +448,13 @@
 
                 events.push({
                     id: d.id,
-                    // 💡 加上精緻小圖示後的換行格式
-                    // title: `📝 ${m.title}\n 📍 [${m.room}]\n 👤 ${m.userName || '未填'}`,
-                    title: `📍 [${m.room}]\n 👤 ${m.userName}`,
+                    title: `📝 ${m.title}\n 📍 [${m.room}]\n 👤 ${m.userName}`,
                     start: m.startTime,
                     end: m.endTime,
                     backgroundColor: eventColor,
                     borderColor: eventColor,
                     extendedProps: {
+                        originTitle: m.title,
                         room: m.room,
                         dept: m.dept,
                         userName: m.userName,
