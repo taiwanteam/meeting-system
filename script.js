@@ -40,7 +40,7 @@
             initialView: 'dayGridMonth',
             locale: 'zh-tw',
             displayEventTime: false, // 隱藏日曆內建的時間標籤
-            navLinks: true, 
+            navLinks: false, //不在點下一層
             
             eventTimeFormat: {
                 hour: '2-digit',
