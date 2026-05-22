@@ -92,14 +92,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
                 // 判斷是否符合刪除資格
                 if (isOwner) {
                     // 狀況 1：如果是建立者本人，隨時可刪除
-                    if (confirm(`${msg}\n\n[您是此預約建立者] 確定要刪除此預約嗎？`)) {
+                    if (confirm(`${msg}\n\n[是此預約建立者] 確定要刪除此預約嗎？`)) {
                         delMeeting(info.event.id);
                     }
                 } else {
                     // 狀況 2：非本人建立的行程（交給後端 Rules 去卡管理員或一般人身份）
-                    if (confirm(`${msg}\n\n⚠️ 您非此預約建立者無權刪除`)) {
-                        delMeeting(info.event.id);
-                    }
+                   alert(`${msg}\n\n❌ 系統提示：並非此預約建立者，無權刪除此行程。`);
                 }
             }
         });
@@ -242,7 +240,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
             loadData();
         } catch (error) {
             if (error.code === 'permission-denied') {
-                alert("🔒 您並非此行程建立者。");
+                alert("🔒並非此預約建立者，無權刪除此行程。");
             } else {
                 console.error("刪除失敗技術詳情：", error); // 💡 保留 Log 供工程師看 F12
                 alert("❌ 刪除失敗請洽工程師。");
