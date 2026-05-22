@@ -97,7 +97,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
                     }
                 } else {
                     // 狀況 2：非本人建立的行程（交給後端 Rules 去卡管理員或一般人身份）
-                    if (confirm(`${msg}\n\n⚠️ 系統提示：您非此預約建立者。\n如果您是系統管理員，且此為一個月前舊行程，點擊確定後將嘗試送交系統清理。`)) {
+                    if (confirm(`${msg}\n\n⚠️ 您非此預約建立者無權刪除`)) {
                         delMeeting(info.event.id);
                     }
                 }
