@@ -184,6 +184,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 
         const newStart = new Date(startVal);
         const newEnd = new Date(endVal);
+        
+        // 💡 補強：避免無效的時間造成比對崩潰
+        if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime())) return alert("❌ 請填寫正確的時間格式");
         if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
 
         addBtn.disabled = true;
@@ -238,17 +241,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
             await deleteDoc(doc(db, "meetings", id));
             loadData();
         } catch (error) {
-            // 捕捉後端 Rules 拒絕的錯誤代碼
             if (error.code === 'permission-denied') {
                 alert("🔒 您並非此行程建立者。");
             } else {
+                console.error("刪除失敗技術詳情：", error); // 💡 保留 Log 供工程師看 F12
                 alert("❌ 刪除失敗請洽工程師。");
             }
         }
     }
 
-
-/* 🧹 管理員一鍵清理 */
+    /* 🧹 管理員一鍵清理 */
     window.autoCleanup = async function () {
         if (!currentUser) return alert("請先登入");
 
@@ -262,7 +264,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
             try {
                 const snapshot = await getDocs(collection(db, "meetings"));
                 
-                // 💡 計算時間基準
                 const oneMonthAgo = new Date();
                 oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1); 
                 
@@ -273,7 +274,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
                     const m = d.data();
                     const meetingEndTime = new Date(m.endTime);
                     
-                    // 💡 關鍵：符合一個月前的舊行程放進包裹
                     if (meetingEndTime < oneMonthAgo) {
                         batch.delete(d.ref);
                         deleteCount++;
@@ -282,6 +282,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 
                 if (deleteCount === 0) {
                     alert("✨ 檢查完畢！目前行事曆中沒有一個月前的舊資料，無需清理。");
+                    // 💡 補強：在直回傳前，必須要把按鈕解凍，不然同仁無法再點擊
+                    if (cleanupBtn) {
+                        cleanupBtn.disabled = false;
+                        cleanupBtn.innerText = "🧹 清理一個月前舊資料";
+                    }
                     return;
                 }
 
@@ -292,7 +297,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
                 loadData(); 
                 
             } catch (e) {
-                console.error("清理失敗請洽工程師");
+                console.error("清理失敗技術詳情：", e); // 💡 修正：傳入 e 才能保留系統真實報錯
                 
                 if (e.code === 'permission-denied') {
                     alert("🔒 非可執行清理一個月前資料之管理者。");
@@ -307,7 +312,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
             }
         }
     };
-	
 
     /* 📋 載入資料並放入行事曆 */
     async function loadData() {
