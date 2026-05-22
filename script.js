@@ -32,6 +32,17 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
         "預設": "#9c27b0"
     };
 
+// 全面鎖定所有 class 包含 date-picker-clean 的鍵盤輸入
+document.addEventListener("DOMContentLoaded", () => {
+    const dateInputs = document.querySelectorAll(".date-picker-clean");
+    dateInputs.forEach(input => {
+        input.onkeydown = (e) => {
+            e.preventDefault(); // 阻擋鍵盤輸入行為
+            return false;
+        };
+    });
+});
+
     // 初始化 FullCalendar
     function initCalendar() {
         const calendarEl = document.getElementById('calendar');
@@ -184,7 +195,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
         const newEnd = new Date(endVal);
         
         // 💡 補強：避免無效的時間造成比對崩潰
-        if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime())) return alert("❌ 請填寫正確的時間格式");
+        if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime())) return alert("❌ 請點擊欄位右側圖示以開啟日期選單進行選擇。確的時間格式");
         if (newStart >= newEnd) return alert("❌ 結束時間必須晚於開始時間");
 
         addBtn.disabled = true;
