@@ -97,6 +97,18 @@
     gap: 8px !important; /* 按鈕之間的舒適間距 */
 }
 
+/* 💡 ✨ 這是新加入的修改：把黏在一起的上個月與下個月按鈕徹底推開 */
+.fc .fc-button-group .fc-prev-button {
+    margin-right: 8px !important;            /* 👈 撐開左右按鈕 8px 間距，不讓它們黏在一起 */
+    border-top-right-radius: 6px !important;  /* 補回原本被削平的右側圓角 */
+    border-bottom-right-radius: 6px !important;
+}
+
+.fc .fc-button-group .fc-next-button {
+    border-top-left-radius: 6px !important;   /* 補回原本被削平的左側圓角 */
+    border-bottom-left-radius: 6px !important;
+}
+
 /* 2. 【右側按鈕群】強迫 `月 週 日` 容器保持彈性排列，防擠壓 */
 .fc .fc-toolbar-chunk:last-child {
     display: flex !important;
