@@ -300,7 +300,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
                 console.error("清理失敗技術詳情：", e); // 💡 修正：傳入 e 才能保留系統真實報錯
                 
                 if (e.code === 'permission-denied') {
-                    alert("🔒 非可執行清理一個月前資料之管理者。");
+                    alert("🔒 非管理者無法執行清理一個月前資料。");
                 } else {
                     alert("❌ 清理失敗請洽工程師");
                 }
